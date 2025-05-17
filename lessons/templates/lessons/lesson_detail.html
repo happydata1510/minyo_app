@@ -1,0 +1,264 @@
+{% extends 'core/base.html' %}
+{% block title %}{{ lesson.title }} - 강의 듣기{% endblock title %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <h1 class="text-3xl font-bold mb-6">{{ lesson.title }}</h1>
+    
+    <!-- 강의 듣기 섹션 -->
+    <div class="bg-white rounded-lg shadow-md p-4 mb-6">
+        <h2 class="text-xl font-bold mb-4">강의 듣기</h2>
+        
+        <div class="bg-gray-100 rounded-lg p-6">
+            <!-- 오디오 요소 (숨김) -->
+            <audio id="audioPlayer" src="{{ lesson.audio_file.url }}" preload="metadata" style="display:none;"></audio>
+            
+            <!-- 시간 표시 -->
+            <div class="flex justify-between mb-8">
+                <span id="currentTime" class="text-2xl font-bold">00:00</span>
+                <span id="duration" class="text-2xl font-bold">00:00</span>
+            </div>
+            
+            <!-- 진행 바 (현재는 숨겨져 있음) -->
+            <div class="w-full h-2 bg-gray-300 rounded-full mb-8 relative hidden">
+                <div id="progressBar" class="absolute top-0 left-0 h-2 bg-black rounded-full" style="width: 0%;"></div>
+            </div>
+            
+            <!-- 컨트롤 버튼 -->
+            <div class="flex justify-center items-center space-x-8">
+                <!-- 처음으로 버튼 -->
+                <button id="rewindButton" class="p-4 rounded-full bg-gray-200 hover:bg-gray-300" style="width: 70px; height: 70px;">
+                    <img src="https://img.icons8.com/ios-filled/50/000000/skip-to-start.png" alt="처음으로" style="width: 40px; height: 40px;">
+                </button>
+                
+                <!-- 10초 뒤로 버튼 -->
+                <button id="backwardButton" class="p-4 rounded-full bg-gray-200 hover:bg-gray-300" style="width: 70px; height: 70px;">
+                    <img src="https://img.icons8.com/ios-filled/50/000000/rewind.png" alt="10초 뒤로" style="width: 40px; height: 40px;">
+                </button>
+                
+                <!-- 재생/일시정지 버튼 -->
+                <button id="playButton" class="p-4 rounded-full bg-white text-black border-2 border-gray-300" style="width: 80px; height: 80px;">
+                    <img id="playIcon" src="https://img.icons8.com/ios-filled/50/000000/play.png" alt="재생" style="width: 50px; height: 50px; display: block; margin: 0 auto;">
+                    <img id="pauseIcon" src="https://img.icons8.com/ios-filled/50/000000/pause.png" alt="일시정지" style="width: 50px; height: 50px; display: none; margin: 0 auto;">
+                </button>
+                
+                <!-- 10초 앞으로 버튼 -->
+                <button id="forwardButton" class="p-4 rounded-full bg-gray-200 hover:bg-gray-300" style="width: 70px; height: 70px;">
+                    <img src="https://img.icons8.com/ios-filled/50/000000/fast-forward.png" alt="10초 앞으로" style="width: 40px; height: 40px;">
+                </button>
+                
+                <!-- 끝으로 버튼 -->
+                <button id="fastForwardButton" class="p-4 rounded-full bg-gray-200 hover:bg-gray-300" style="width: 70px; height: 70px;">
+                    <img src="https://img.icons8.com/ios-filled/50/000000/end.png" alt="끝으로" style="width: 40px; height: 40px;">
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 강의 자료 및 해설 섹션 -->
+    <div class="bg-white rounded-lg shadow-md p-4 mb-6">
+        <h2 class="text-xl font-bold mb-4">강의 자료 및 해설</h2>
+        <div class="prose max-w-none">
+            {{ lesson.description|linebreaks }}
+            
+            {% if lesson.commentary %}
+            <div class="mt-4 pt-4 border-t">
+                <h3 class="font-medium mb-2">해설 강의</h3>
+                {{ lesson.commentary|linebreaks }}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- 녹음 섹션 -->
+    <div class="bg-white rounded-lg shadow-md p-4">
+        <h2 class="text-xl font-bold mb-4">나도 따라 부르기</h2>
+        <div class="text-center">
+            <button id="recordButton" class="bg-red-500 hover:bg-red-600 text-white font-bold px-6 py-3 rounded-full text-xl" style="min-width: 180px; min-height: 60px;">
+                녹음 시작
+            </button>
+            
+            <div id="recordingContainer" class="hidden mt-4">
+                <div class="flex items-center justify-center">
+                    <div id="recordingTime" class="text-2xl mr-2">00:00</div>
+                    <div class="flex">
+                        <div class="h-4 w-4 bg-red-500 rounded-full mr-1 animate-pulse"></div>
+                        <div class="h-4 w-4 bg-red-500 rounded-full mr-1 animate-pulse delay-150"></div>
+                        <div class="h-4 w-4 bg-red-500 rounded-full animate-pulse delay-300"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="playbackContainer" class="hidden mt-6">
+                <div class="bg-gray-100 p-4 rounded-lg">
+                    <audio id="recordingPlayback" controls class="w-full" style="height: 50px;"></audio>
+                </div>
+                <div class="mt-4 flex justify-center gap-4">
+                    <button id="saveRecordingButton" class="bg-green-500 hover:bg-green-600 text-white font-bold px-6 py-3 rounded-lg text-lg">저장하기</button>
+                    <button id="discardRecordingButton" class="bg-gray-500 hover:bg-gray-600 text-white font-bold px-6 py-3 rounded-lg text-lg">취소하기</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const audioPlayer = document.getElementById('audioPlayer');
+    const playButton = document.getElementById('playButton');
+    const playIcon = document.getElementById('playIcon');
+    const pauseIcon = document.getElementById('pauseIcon');
+    const progressBar = document.getElementById('progressBar');
+    const currentTimeEl = document.getElementById('currentTime');
+    const durationEl = document.getElementById('duration');
+    const backwardButton = document.getElementById('backwardButton');
+    const forwardButton = document.getElementById('forwardButton');
+    const rewindButton = document.getElementById('rewindButton');
+    const fastForwardButton = document.getElementById('fastForwardButton');
+    const recordButton = document.getElementById('recordButton');
+    const recordingContainer = document.getElementById('recordingContainer');
+    const recordingTime = document.getElementById('recordingTime');
+    const playbackContainer = document.getElementById('playbackContainer');
+    const recordingPlayback = document.getElementById('recordingPlayback');
+    const saveRecordingButton = document.getElementById('saveRecordingButton');
+    const discardRecordingButton = document.getElementById('discardRecordingButton');
+    
+    // 미디어 플레이어 기능
+    let isPlaying = false;
+    
+    // 시간 표시 형식 변환
+    function formatTime(seconds) {
+        const minutes = Math.floor(seconds / 60);
+        const secs = Math.floor(seconds % 60);
+        return `${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    }
+    
+    // 오디오 메타데이터 로드 완료 시
+    audioPlayer.addEventListener('loadedmetadata', function() {
+        durationEl.textContent = formatTime(audioPlayer.duration);
+    });
+    
+    // 재생/일시정지 버튼
+    playButton.addEventListener('click', function() {
+        if (isPlaying) {
+            audioPlayer.pause();
+            playIcon.style.display = 'block';
+            pauseIcon.style.display = 'none';
+        } else {
+            audioPlayer.play();
+            playIcon.style.display = 'none';
+            pauseIcon.style.display = 'block';
+        }
+        isPlaying = !isPlaying;
+    });
+    
+    // 10초 앞으로, 뒤로 기능
+    backwardButton.addEventListener('click', function() {
+        audioPlayer.currentTime = Math.max(audioPlayer.currentTime - 10, 0);
+    });
+    
+    forwardButton.addEventListener('click', function() {
+        audioPlayer.currentTime = Math.min(audioPlayer.currentTime + 10, audioPlayer.duration);
+    });
+    
+    // 처음부터, 끝까지 기능
+    rewindButton.addEventListener('click', function() {
+        audioPlayer.currentTime = 0;
+    });
+    
+    fastForwardButton.addEventListener('click', function() {
+        audioPlayer.currentTime = audioPlayer.duration;
+    });
+    
+    // 진행 시간 업데이트
+    audioPlayer.addEventListener('timeupdate', function() {
+        const percent = (audioPlayer.currentTime / audioPlayer.duration) * 100;
+        progressBar.style.width = `${percent}%`;
+        currentTimeEl.textContent = formatTime(audioPlayer.currentTime);
+    });
+    
+    // 녹음 기능
+    let mediaRecorder;
+    let recordedChunks = [];
+    let recordingInterval;
+    let recordingSeconds = 0;
+    
+    recordButton.addEventListener('click', function() {
+        if (mediaRecorder && mediaRecorder.state === 'recording') {
+            // 녹음 중지
+            mediaRecorder.stop();
+            recordButton.textContent = '녹음 시작';
+            recordingContainer.classList.add('hidden');
+            clearInterval(recordingInterval);
+        } else {
+            // 녹음 시작
+            navigator.mediaDevices.getUserMedia({ audio: true })
+                .then(function(stream) {
+                    recordedChunks = [];
+                    recordingSeconds = 0;
+                    
+                    mediaRecorder = new MediaRecorder(stream);
+                    
+                    mediaRecorder.addEventListener('dataavailable', function(e) {
+                        if (e.data.size > 0) recordedChunks.push(e.data);
+                    });
+                    
+                    mediaRecorder.addEventListener('stop', function() {
+                        const blob = new Blob(recordedChunks, { type: 'audio/webm' });
+                        const audioURL = URL.createObjectURL(blob);
+                        recordingPlayback.src = audioURL;
+                        playbackContainer.classList.remove('hidden');
+                    });
+                    
+                    mediaRecorder.start();
+                    recordButton.textContent = '녹음 중지';
+                    recordingContainer.classList.remove('hidden');
+                    playbackContainer.classList.add('hidden');
+                    
+                    // 녹음 시간 업데이트
+                    recordingInterval = setInterval(function() {
+                        recordingSeconds++;
+                        recordingTime.textContent = formatTime(recordingSeconds);
+                    }, 1000);
+                })
+                .catch(function(err) {
+                    console.error('마이크 접근 오류:', err);
+                    alert('마이크 접근에 실패했습니다. 마이크 권한을 확인해주세요.');
+                });
+        }
+    });
+    
+    // 녹음 저장
+    saveRecordingButton.addEventListener('click', function() {
+        const blob = new Blob(recordedChunks, { type: 'audio/webm' });
+        const formData = new FormData();
+        formData.append('audio_file', blob, 'recording.webm');
+        formData.append('lesson_id', '{{ lesson.id }}');
+        
+        fetch('/lessons/save-recording/', {
+            method: 'POST',
+            body: formData,
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('녹음이 저장되었습니다.');
+                playbackContainer.classList.add('hidden');
+            } else {
+                alert('저장 실패: ' + data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('저장 중 오류가 발생했습니다.');
+        });
+    });
+    
+    // 녹음 취소
+    discardRecordingButton.addEventListener('click', function() {
+        playbackContainer.classList.add('hidden');
+        recordedChunks = [];
+    });
+});
+</script>
+{% endblock content %} 

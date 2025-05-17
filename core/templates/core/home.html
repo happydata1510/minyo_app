@@ -1,0 +1,30 @@
+{% extends 'core/base.html' %}
+
+{% block title %}홈 - 민요 플랫폼{% endblock %}
+
+{% block content %}
+<div class="text-center py-10">
+    <h1 class="text-4xl font-bold mb-8">민요 플랫폼에 오신 것을 환영합니다</h1>
+    <p class="text-xl mb-6">우리나라의 아름다운 민요를 배우고 즐겨보세요.</p>
+    
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto mt-12">
+        <div class="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition">
+            <h2 class="text-2xl font-semibold mb-4">민요 듣기</h2>
+            <p class="mb-4">다양한 지역의 민요를 감상해보세요.</p>
+            <a href="{% url 'minyo:list' %}" class="btn-primary inline-block">더 알아보기</a>
+        </div>
+        
+        <div class="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition">
+            <h2 class="text-2xl font-semibold mb-4">강의 듣기</h2>
+            <p class="mb-4">전문가들의 민요 강의를 들어보세요.</p>
+            <a href="{% url 'lessons:list' %}" class="btn-primary inline-block">더 알아보기</a>
+        </div>
+        
+        <div class="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition">
+            <h2 class="text-2xl font-semibold mb-4">커뮤니티</h2>
+            <p class="mb-4">다른 사용자들과 함께 이야기를 나눠보세요.</p>
+            <a href="{% url 'community:list' %}" class="btn-primary inline-block">더 알아보기</a>
+        </div>
+    </div>
+</div>
+{% endblock %} 

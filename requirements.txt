@@ -1,0 +1,5 @@
+Django==5.2.1
+whitenoise==6.6.0  # 정적 파일 제공
+gunicorn==21.2.0  # 프로덕션 WSGI 서버
+psycopg2-binary==2.9.9  # PostgreSQL 연결
+dj-database-url==2.1.0  # 데이터베이스 URL 파싱

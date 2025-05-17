@@ -1,0 +1,315 @@
+{% extends 'core/base.html' %}
+{% block title %}{{ lesson.title }} - 민요 플랫폼{% endblock %}
+
+{% block content %}
+<style>
+.lesson-container {
+    max-width: 800px !important;
+    margin: 0 auto !important;
+    padding: 20px !important;
+}
+
+.lesson-box {
+    background-color: white !important;
+    border-radius: 12px !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1) !important;
+    padding: 24px !important;
+    margin-bottom: 24px !important;
+}
+
+.lesson-title {
+    font-size: 24px !important;
+    font-weight: bold !important;
+    margin-bottom: 16px !important;
+}
+
+.progress-container {
+    height: 8px !important;
+    background-color: #e0e0e0 !important;
+    border-radius: 4px !important;
+    overflow: hidden !important;
+    margin: 10px 0 !important;
+    cursor: pointer !important;
+    width: 100% !important;
+}
+
+.progress-bar {
+    height: 100% !important;
+    width: 0% !important;
+    background-color: #3b82f6 !important;
+    border-radius: 4px !important;
+}
+
+.player-controls {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    width: 100% !important;
+    margin-top: 16px !important;
+}
+
+.control-btn {
+    background-color: #000 !important;
+    color: white !important;
+    border: none !important;
+    border-radius: 50% !important;
+    width: 50px !important;
+    height: 50px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-size: 18px !important;
+    cursor: pointer !important;
+}
+
+.record-btn {
+    background-color: #e53e3e !important;
+    color: white !important;
+    border: none !important;
+    border-radius: 50% !important;
+    width: 60px !important;
+    height: 60px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-size: 24px !important;
+    cursor: pointer !important;
+    margin: 0 auto !important;
+}
+
+.recording {
+    animation: pulse 1.5s infinite !important;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+}
+
+.lesson-nav {
+    display: flex !important;
+    justify-content: space-between !important;
+    margin-bottom: 24px !important;
+}
+</style>
+
+<div class="lesson-container">
+    <!-- 강의 네비게이션 -->
+    <div class="lesson-nav">
+        <h1 class="text-2xl font-bold">강의 목록</h1>
+        <button class="bg-blue-600 text-white px-4 py-2 rounded-lg">내 녹음 목록</button>
+    </div>
+    
+    <!-- 강의 제목 -->
+    <h2 class="text-3xl font-bold mb-6">{{ lesson.title }}</h2>
+    
+    <!-- 강의 듣기 박스 -->
+    <div class="lesson-box">
+        <div class="lesson-title">1. 강의 듣기</div>
+        
+        <!-- 오디오 요소 (숨김) -->
+        <audio id="lesson-audio" src="{{ lesson.audio_file.url }}" style="display: none;"></audio>
+        
+        <!-- 가로형 뮤직 플레이어 -->
+        <div class="flex items-center justify-between">
+            <span id="current-time" class="text-lg font-medium">0:00</span>
+            
+            <div class="flex-grow mx-4">
+                <div class="progress-container" id="progress-container">
+                    <div class="progress-bar" id="progress-bar"></div>
+                </div>
+            </div>
+            
+            <span id="duration" class="text-lg font-medium">0:00</span>
+        </div>
+        
+        <div class="player-controls">
+            <button id="backward-btn" class="control-btn">⏪</button>
+            <button id="play-pause-btn" class="control-btn" style="width: 60px; height: 60px;">▶</button>
+            <button id="forward-btn" class="control-btn">⏩</button>
+        </div>
+    </div>
+    
+    <!-- 강의 자료 박스 -->
+    <div class="lesson-box">
+        <div class="lesson-title">2. 강의 자료</div>
+        
+        <!-- 강의 설명 -->
+        <div class="mb-6">
+            <h3 class="text-xl font-semibold mb-3">개요</h3>
+            <p class="text-lg">{{ lesson.description }}</p>
+        </div>
+        
+        <!-- 해설 강의 - 조건부 표시 -->
+        {% if lesson.commentary %}
+        <div>
+            <h3 class="text-xl font-semibold mb-3">해설</h3>
+            <div class="bg-gray-100 p-4 rounded-lg">
+                <p class="text-lg whitespace-pre-line">{{ lesson.commentary }}</p>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    
+    <!-- 녹음 박스 -->
+    <div class="lesson-box">
+        <div class="lesson-title">3. 따라 부르기</div>
+        
+        <p class="text-lg mb-6 text-center">녹음 버튼을 눌러 강의를 따라 불러보세요.</p>
+        
+        <!-- 녹음 버튼 -->
+        <div class="text-center mb-8">
+            <button id="record-btn" class="record-btn">🎙️</button>
+            <p id="record-status" class="mt-2 text-gray-600">녹음 준비됨</p>
+        </div>
+        
+        <!-- 녹음된 오디오 플레이어 (처음에는 숨김) -->
+        <div id="recording-player" style="display: none;">
+            <h3 class="text-xl font-semibold mb-3">내 녹음</h3>
+            <audio id="recorded-audio" controls class="w-full"></audio>
+        </div>
+    </div>
+</div>
+
+<script>
+// 오디오 플레이어 제어
+document.addEventListener('DOMContentLoaded', function() {
+    // 강의 오디오 요소
+    const audio = document.getElementById('lesson-audio');
+    const playPauseBtn = document.getElementById('play-pause-btn');
+    const backwardBtn = document.getElementById('backward-btn');
+    const forwardBtn = document.getElementById('forward-btn');
+    const progressBar = document.getElementById('progress-bar');
+    const progressContainer = document.getElementById('progress-container');
+    const currentTimeEl = document.getElementById('current-time');
+    const durationEl = document.getElementById('duration');
+    
+    // 녹음 관련 요소
+    const recordBtn = document.getElementById('record-btn');
+    const recordStatus = document.getElementById('record-status');
+    const recordingPlayer = document.getElementById('recording-player');
+    const recordedAudio = document.getElementById('recorded-audio');
+    
+    // 미디어 레코더 및 녹음 상태
+    let mediaRecorder;
+    let recordedChunks = [];
+    let isRecording = false;
+    
+    // 시간 형식 변환 함수
+    function formatTime(seconds) {
+        if (isNaN(seconds)) return "0:00";
+        const minutes = Math.floor(seconds / 60);
+        const secs = Math.floor(seconds % 60);
+        return `${minutes}:${secs < 10 ? '0' + secs : secs}`;
+    }
+    
+    // 진행 바 업데이트 함수
+    function updateProgressBar() {
+        if (!audio) return;
+        
+        const duration = audio.duration;
+        const currentTime = audio.currentTime;
+        
+        if (isNaN(duration)) return;
+        
+        const progressPercent = (currentTime / duration) * 100;
+        progressBar.style.width = `${progressPercent}%`;
+        currentTimeEl.textContent = formatTime(currentTime);
+    }
+    
+    // 재생/일시정지 토글
+    playPauseBtn.addEventListener('click', function() {
+        if (audio.paused) {
+            audio.play().then(() => {
+                playPauseBtn.textContent = '⏸️';
+            });
+        } else {
+            audio.pause();
+            playPauseBtn.textContent = '▶';
+        }
+    });
+    
+    // 10초 뒤로
+    backwardBtn.addEventListener('click', function() {
+        audio.currentTime = Math.max(0, audio.currentTime - 10);
+    });
+    
+    // 10초 앞으로
+    forwardBtn.addEventListener('click', function() {
+        audio.currentTime = Math.min(audio.duration, audio.currentTime + 10);
+    });
+    
+    // 진행 바 클릭 처리
+    progressContainer.addEventListener('click', function(e) {
+        const rect = progressContainer.getBoundingClientRect();
+        const pos = (e.clientX - rect.left) / rect.width;
+        audio.currentTime = pos * audio.duration;
+    });
+    
+    // 시간 업데이트
+    audio.addEventListener('timeupdate', updateProgressBar);
+    
+    // 오디오 로드 완료 시 처리
+    audio.addEventListener('loadedmetadata', function() {
+        durationEl.textContent = formatTime(audio.duration);
+    });
+    
+    // 녹음 버튼 처리
+    recordBtn.addEventListener('click', function() {
+        if (!isRecording) {
+            startRecording();
+        } else {
+            stopRecording();
+        }
+    });
+    
+    // 녹음 시작 함수
+    function startRecording() {
+        // 브라우저에서 녹음 지원 여부 확인
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            alert('브라우저가 녹음을 지원하지 않습니다.');
+            return;
+        }
+        
+        navigator.mediaDevices.getUserMedia({ audio: true })
+            .then(function(stream) {
+                recordStatus.textContent = '녹음 중...';
+                recordBtn.textContent = '⏹️';
+                recordBtn.classList.add('recording');
+                
+                mediaRecorder = new MediaRecorder(stream);
+                recordedChunks = [];
+                
+                mediaRecorder.addEventListener('dataavailable', function(e) {
+                    if (e.data.size > 0) recordedChunks.push(e.data);
+                });
+                
+                mediaRecorder.addEventListener('stop', function() {
+                    const blob = new Blob(recordedChunks, { type: 'audio/webm' });
+                    const url = URL.createObjectURL(blob);
+                    recordedAudio.src = url;
+                    recordingPlayer.style.display = 'block';
+                });
+                
+                mediaRecorder.start();
+                isRecording = true;
+            })
+            .catch(function(err) {
+                alert('녹음 시작 중 오류가 발생했습니다: ' + err.message);
+            });
+    }
+    
+    // 녹음 중지 함수
+    function stopRecording() {
+        if (!mediaRecorder) return;
+        
+        mediaRecorder.stop();
+        isRecording = false;
+        recordBtn.textContent = '🎙️';
+        recordBtn.classList.remove('recording');
+        recordStatus.textContent = '녹음 완료';
+    }
+});
+</script>
+{% endblock %} 

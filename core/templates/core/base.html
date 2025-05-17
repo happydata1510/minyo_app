@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}민요 플랫폼{% endblock %}</title>
+    <link rel="stylesheet" href="/static/css/output.css">
+    {% block extra_css %}{% endblock %}
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <header class="bg-primary text-white p-4">
+        <div class="container mx-auto flex justify-between items-center">
+            <a href="{% url 'core:home' %}" class="text-2xl font-bold">민요 플랫폼</a>
+            <nav>
+                <ul class="flex space-x-4">
+                    <li><a href="{% url 'core:home' %}" class="hover:text-accent">홈</a></li>
+                    <li><a href="{% url 'minyo:list' %}" style="color: #000000;">민요 모음</a></li>
+                    <li><a href="{% url 'lessons:list' %}" class="hover:text-accent">강의 듣기</a></li>
+                    <li><a href="{% url 'community:list' %}" class="hover:text-accent">커뮤니티</a></li>
+                    {% if user.is_authenticated %}
+                        <li><a href="{% url 'accounts:profile' %}" class="hover:text-accent">프로필</a></li>
+                        <li><a href="{% url 'accounts:logout' %}" class="hover:text-accent">로그아웃</a></li>
+                    {% else %}
+                        <li><a href="{% url 'accounts:login' %}" class="hover:text-accent">로그인</a></li>
+                        <li><a href="{% url 'accounts:register' %}" class="hover:text-accent">회원가입</a></li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+    </header>
+    
+    <main class="container mx-auto p-4">
+        {% block content %}
+        {% endblock %}
+    </main>
+    
+    <footer class="bg-gray-800 text-white p-4 mt-8">
+        <div class="container mx-auto text-center">
+            <p>&copy; 2023 민요 플랫폼. All rights reserved.</p>
+        </div>
+    </footer>
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html> 

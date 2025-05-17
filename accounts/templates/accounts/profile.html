@@ -1,0 +1,70 @@
+{% extends 'core/base.html' %}
+{% block title %}프로필 - 민요 플랫폼{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto">
+    <div class="bg-white p-6 rounded-lg shadow-md mb-6">
+        <div class="flex flex-col md:flex-row items-center md:items-start">
+            <div class="mb-4 md:mb-0 md:mr-6">
+                {% if user.profile.profile_image %}
+                    <img class="w-32 h-32 rounded-full object-cover" src="{{ user.profile.profile_image.url }}" alt="{{ user.username }}의 프로필 이미지">
+                {% else %}
+                    <div class="w-32 h-32 rounded-full bg-gray-300 flex items-center justify-center text-gray-500">
+                        <span class="text-4xl">{{ user.username.0|upper }}</span>
+                    </div>
+                {% endif %}
+            </div>
+            
+            <div class="text-center md:text-left flex-grow">
+                <h1 class="text-2xl font-bold mb-2">{{ user.username }}</h1>
+                <p class="text-gray-600 mb-4">{{ user.email }}</p>
+                {% if user.profile.bio %}
+                    <p class="mb-4">{{ user.profile.bio }}</p>
+                {% else %}
+                    <p class="text-gray-500 mb-4">아직 자기소개가 없습니다.</p>
+                {% endif %}
+                <a href="{% url 'accounts:edit_profile' %}" class="btn-primary inline-block">프로필 수정</a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="bg-white p-6 rounded-lg shadow-md">
+        <h2 class="text-xl font-semibold mb-4">나의 활동</h2>
+        
+        <div class="mb-6">
+            <h3 class="font-medium mb-2">나의 녹음</h3>
+            {% if user.recordings.all %}
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {% for recording in user.recordings.all %}
+                        <div class="border p-4 rounded-lg">
+                            <p class="font-medium mb-2">{{ recording.lesson.title }}</p>
+                            <p class="text-sm text-gray-600 mb-2">녹음 날짜: {{ recording.created_at|date:"Y년 m월 d일" }}</p>
+                            <audio src="{{ recording.recording_file.url }}" controls class="w-full"></audio>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p class="text-gray-500">아직 녹음한 내용이 없습니다.</p>
+            {% endif %}
+        </div>
+        
+        <div>
+            <h3 class="font-medium mb-2">나의 게시글</h3>
+            {% if user.posts.all %}
+                <ul class="divide-y">
+                    {% for post in user.posts.all %}
+                        <li class="py-3">
+                            <a href="{% url 'community:detail' post.id %}" class="hover:text-primary">
+                                <p class="font-medium">{{ post.title }}</p>
+                                <p class="text-sm text-gray-600">{{ post.created_at|date:"Y년 m월 d일" }}</p>
+                            </a>
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p class="text-gray-500">아직 작성한 게시글이 없습니다.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %} 

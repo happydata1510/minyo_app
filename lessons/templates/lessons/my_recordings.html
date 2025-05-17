@@ -1,0 +1,44 @@
+{% extends 'core/base.html' %}
+{% block title %}내 녹음 목록 - 민요 플랫폼{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="max-w-4xl mx-auto">
+        <div class="flex justify-between items-center mb-8">
+            <h1 class="text-3xl font-bold">내 녹음 목록</h1>
+            <a href="{% url 'lessons:list' %}" class="btn-primary">강의 목록으로</a>
+        </div>
+        
+        {% if recordings %}
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <div class="grid grid-cols-1 gap-6">
+                    {% for recording in recordings %}
+                        <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition">
+                            <div class="flex flex-col md:flex-row justify-between">
+                                <div class="mb-4 md:mb-0">
+                                    <h2 class="text-xl font-semibold mb-2">{{ recording.lesson.title }}</h2>
+                                    <p class="text-gray-600 text-sm">녹음 일시: {{ recording.created_at|date:"Y년 m월 d일 H:i" }}</p>
+                                </div>
+                                <div class="flex items-center">
+                                    <a href="{% url 'lessons:player' recording.lesson.id %}" class="text-primary hover:text-secondary text-sm mr-4">
+                                        원본 강의 보기
+                                    </a>
+                                </div>
+                            </div>
+                            
+                            <div class="mt-4">
+                                <audio src="{{ recording.recording_file.url }}" controls class="w-full"></audio>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        {% else %}
+            <div class="bg-white rounded-lg shadow-md p-8 text-center">
+                <p class="text-gray-600 text-lg mb-6">아직 녹음한 내용이 없습니다.</p>
+                <a href="{% url 'lessons:list' %}" class="btn-primary inline-block">강의 듣고 녹음하기</a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %} 
